@@ -1245,14 +1245,47 @@ namespace CodingDaniel.MapEditor.MEEditor.MESave
             Shader lit = dummyMat != null ? dummyMat.shader : null;
             if (lit == null) return;
 
+            var seen = new HashSet<Material>();
             foreach (var r in root.GetComponentsInChildren<Renderer>(true))
             {
                 foreach (var m in r.sharedMaterials)
                 {
-                    if (m != null && m.shader != null && m.shader != lit && m.shader.name == lit.name)
+                    if (m == null || !seen.Add(m) || m.shader == lit) continue;
+
+                    string shaderName = m.shader != null ? m.shader.name : "null";
+                    bool supported = m.shader != null && m.shader.isSupported;
+                    bool broken = m.shader == null || !supported || shaderName == "Hidden/InternalErrorShader";
+
+                    if (shaderName == lit.name || (broken && IsLitFamily(m)))
+                    {
+                        Debug.Log($"[Workshop] {root.name}/{m.name}: {shaderName} supported={supported} -> {lit.name}");
+                        Texture mainTex = m.HasProperty(MainTex) ? m.GetTexture(MainTex) : null;
                         m.shader = lit;
+                        if (m.GetTexture(LitBaseMap) == null && mainTex != null)
+                            m.SetTexture(LitBaseMap, mainTex);
+                    }
+                    else if (broken)
+                    {
+                        Debug.LogWarning($"[Workshop] {root.name}/{m.name}: {shaderName} supported={supported}, left as is");
+                    }
                 }
             }
+        }
+
+        static readonly int MainTex = Shader.PropertyToID("_MainTex");
+        static readonly int LitBaseMap = Shader.PropertyToID("_BaseMap");
+
+        static readonly HashSet<string> LitShaders = new()
+        {
+            "Universal Render Pipeline/Lit", "Universal Render Pipeline/Simple Lit",
+            "Universal Render Pipeline/Complex Lit", "Universal Render Pipeline/Baked Lit",
+        };
+
+        static bool IsLitFamily(Material m)
+        {
+            if (m.shader != null && LitShaders.Contains(m.shader.name))
+                return true;
+            return m.HasProperty("_BaseMap") && m.HasProperty("_BaseColor") && m.HasProperty("_Metallic");
         }
 
         static readonly HashSet<Type> Allowed = new()
@@ -1284,13 +1317,13 @@ namespace CodingDaniel.MapEditor.MEEditor.MESave
 
             foreach (var external in externalAudioClips)
             {
-                Destroy(external.Item2);
+                if (external.Item2 != null)
+                    Destroy(external.Item2);
             }
 
             foreach (var external in externalDecalMaterials)
             {
-                if (external.Item2 != null)
-                    Destroy(external.Item2);
+                Destroy(external.Item2);
             }
 
             foreach (var obj in loadedObject)
