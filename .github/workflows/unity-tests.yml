@@ -26,15 +26,12 @@ jobs:
           restore-keys: |
             Library-
 
-      - name: Set license secret key
-        run: echo "secret_key=UNITY_LICENSE_$(echo 2021.3.45f2 | cut -c 1-4)" >> "$GITHUB_ENV"
-
       - name: Test
         uses: game-ci/unity-test-runner@v4
         env:
-          UNITY_LICENSE: ${{ secrets[env.secret_key] }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          unityVersion: 2021.3.45f2
+          # unityVersion: 2021.3.45f2
