@@ -388,7 +388,7 @@ namespace CodingDaniel.MapEditor.UI.AddObject
 
         static void SetupColliders(GameObject go, bool enabled, int layer)
         {
-            foreach (var col in go.GetComponentsInChildren<Collider>())
+            foreach (var col in go.GetComponentsInChildren<Collider>(true))
             {
                 col.enabled = enabled;
                 col.gameObject.layer = layer;
