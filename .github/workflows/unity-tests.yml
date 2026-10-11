@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  statuses: write
+
 concurrency:
   group: unity-tests
   cancel-in-progress: true
