@@ -1141,35 +1141,18 @@ namespace CodingDaniel.MapEditor.MEEditor.MESave
                     Debug.Log(n);
 
                     string audioPath = FindFile(p, $"{n}.wav");
-                    // Debug.Log(audioPath + "Path exist: " + File.Exists(audioPath));
-                    if (File.Exists(audioPath))
+                    if (!File.Exists(audioPath))
+                        audioPath = FindFile(p, $"{n}.mp3");
+
+                    AudioClip clip = File.Exists(audioPath) ? await LoadAudio(audioPath) : null;
+                    if (clip == null)
                     {
-                        AudioClip clip = await LoadAudio(audioPath);
-                        if (clip == null)
-                        {
-                            Debug.LogWarning($"Failed to load audio {audioPath}");
-                            continue;
-                        }
-                        clip.name = n;
-
-                        externalAudioClips.Add(new Tuple<string, AudioClip>(audioPath, clip));
-                        continue;
+                        Debug.LogWarning($"Failed to load audio {audioPath}");
+                        clip = AudioClip.Create(n, 1, 1, 44100, false);
                     }
+                    clip.name = n;
 
-                    audioPath = FindFile(p, $"{n}.mp3");
-                    // Debug.Log(audioPath + "Path exist: " + File.Exists(audioPath));
-                    if (File.Exists(audioPath))
-                    {
-                        AudioClip clip = await LoadAudio(audioPath);
-                        if (clip == null)
-                        {
-                            Debug.LogWarning($"Failed to load audio {audioPath}");
-                            continue;
-                        }
-                        clip.name = n;
-
-                        externalAudioClips.Add(new Tuple<string, AudioClip>(audioPath, clip));
-                    }
+                    externalAudioClips.Add(new Tuple<string, AudioClip>(audioPath, clip));
                 }
 
                 if (Directory.Exists(data.GetModelPath()))
@@ -1306,7 +1289,8 @@ namespace CodingDaniel.MapEditor.MEEditor.MESave
 
             foreach (var external in externalDecalMaterials)
             {
-                Destroy(external.Item2);
+                if (external.Item2 != null)
+                    Destroy(external.Item2);
             }
 
             foreach (var obj in loadedObject)
@@ -1537,7 +1521,7 @@ namespace CodingDaniel.MapEditor.MEEditor.MESave
 
             foreach (var audioData in data.audioDatas)
             {
-                if (externalAudioClips.Count > audioData.index)
+                if (audioData.index >= 0 && audioData.index < externalAudioClips.Count)
                 {
                     ExposeToEditor go = AddExternalObjectMenu.CreateAudioSourceExposeToEditor(externalAudioClips[audioData.index].Item2);
 
