@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Free Disk Space (Ubuntu)
-        if: runner.os == 'ubuntu'
+        if: runner.os == 'Linux'
         uses: jlumbroso/free-disk-space@v2
         with:
           tool-cache: false
