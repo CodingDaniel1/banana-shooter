@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: build-n-deploy-steam
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -20,12 +20,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2022
             targetPlatform: StandaloneWindows64
           - os: ubuntu-latest
             targetPlatform: StandaloneLinux64
 
     steps:
+      - name: Free Disk Space (Ubuntu)
+        if: runner.os == 'ubuntu'
+        uses: jlumbroso/free-disk-space@v2
+        with:
+          tool-cache: false
+
       - name: Install Banana Shooter Unlicensed Backup CLI
         shell: bash
         run: |
@@ -33,10 +39,13 @@ jobs:
 
           if [ "${{ runner.os }}" = "Windows" ]; then
             ARCHIVE="bsubp-x86_64-pc-windows-msvc.zip"
+            EXPECTED_SHA256="32c4d446967582d12772f756c84b3a8526da7dd7d643d96564e78bb16a2b5fbc"
           elif [ "${{ runner.os }}" = "macOS" ]; then
             ARCHIVE="bsubp-x86_64-apple-darwin.tar.gz"
+            EXPECTED_SHA256="53d0bafb5972283e51f8a890cfb971df288988e5c934236d0bdf2c4bca6a92ac"
           else
             ARCHIVE="bsubp-x86_64-unknown-linux-gnu.tar.gz"
+            EXPECTED_SHA256="2c57b131ed2fff260ea1ed3c0ab82448a0934734f53098bf23f654f13ad82852"
           fi
 
           INSTALL_DIR="$HOME/.local/bin"
@@ -44,6 +53,8 @@ jobs:
 
           curl -fsSL -o "$ARCHIVE" \
             "https://github.com/Squalive/bsubp/releases/download/v1.0.31/$ARCHIVE"
+
+          echo "$EXPECTED_SHA256  $ARCHIVE" | sha256sum -c -
 
           if [[ "$ARCHIVE" == *.zip ]]; then
             7z x "$ARCHIVE" -o"$INSTALL_DIR" -y > /dev/null
@@ -62,11 +73,26 @@ jobs:
             echo "$INSTALL_DIR" >> "$GITHUB_PATH"
           fi
 
+      # Checkout (without LFS)
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      # Git LFS
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v4
+        id: lfs-cache
         with:
-          fetch-depth: 0
-          lfs: true
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
 
       - name: Restore Unlicensed Assets
         env:
@@ -74,7 +100,7 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
-            bsubp restore latest --confirm
+            bsubp restore 2026-10-02T13-44-15Z --confirm
 
       - name: Cache library
         uses: actions/cache@v4
@@ -149,7 +175,7 @@ jobs:
           username: ${{ secrets.STEAM_USERNAME }}
           configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
           appId: 1949740
-          buildDescription: 'Build ${{ github.sha }}'
+          buildDescription: 'Build ${{ github.ref_name }} ${{ github.sha }}'
           rootPath: build
           depot1Path: StandaloneWindows64
           depot2Path: StandaloneLinux64
