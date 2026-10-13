@@ -99,6 +99,7 @@ jobs:
             bsubp restore 2026-10-13T09-37-48Z -c
 
       - name: Build Server
+        if: runner.os == 'Linux'
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -113,7 +114,8 @@ jobs:
           buildsPath: build-server
           customParameters: -standaloneBuildSubtarget Server
 
-      - name: Remove IL2CPP/Burst debug directories
+      - name: Remove Server IL2CPP/Burst debug directories
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           SUDO=""
@@ -132,6 +134,7 @@ jobs:
           find build-server -maxdepth 2 -type d
 
       - name: Stage Server
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           mkdir -p artifacts/server
@@ -150,7 +153,7 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           buildName: Banana Shooter
 
-      - name: Remove IL2CPP/Burst debug directories
+      - name: Remove Client IL2CPP/Burst debug directories
         shell: bash
         run: |
           SUDO=""
@@ -182,6 +185,7 @@ jobs:
           retention-days: 1
 
       - name: Upload Build Server
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: Server-${{ matrix.targetPlatform }}
@@ -207,12 +211,6 @@ jobs:
       with:
         name: Client-StandaloneLinux64
         path: client/StandaloneLinux64
-
-    - name: Download Windows Server
-      uses: actions/download-artifact@v4
-      with:
-        name: Server-StandaloneWindows64
-        path: server/StandaloneWindows64
 
     - name: Download Linux Server
       uses: actions/download-artifact@v4
@@ -240,7 +238,7 @@ jobs:
         appId: 2406780
         buildDescription: ${{ inputs.build_description }}
         rootPath: server
-        depot1Path: StandaloneWindows64
+        # depot1Path: StandaloneWindows64
         depot2Path: StandaloneLinux64
         releaseBranch: nightly
 
