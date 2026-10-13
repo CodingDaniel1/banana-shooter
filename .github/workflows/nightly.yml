@@ -21,6 +21,8 @@ concurrency:
 
 jobs:
   build-n-deploy:
+    permissions:
+      actions: write
     uses: ./.github/workflows/_build-n-deploy.yml
     with:
       steam_branch: nightly
