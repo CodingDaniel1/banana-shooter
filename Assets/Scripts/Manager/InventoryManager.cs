@@ -139,8 +139,8 @@ namespace Manager
         {
             if (SteamApps.BIsDlcInstalled(new AppId_t(2238100)))
             {
-                HandleQueue.Enqueue(InventoryHandleType.ItemDrop);
-                Inventory.AddPromoItem(out inventoryHandle, (SteamItemDef_t)223);
+                if (Inventory.AddPromoItem(out inventoryHandle, (SteamItemDef_t)223))
+                    HandleQueue.Enqueue(InventoryHandleType.ItemDrop);
             }
         }
 
@@ -168,9 +168,9 @@ namespace Manager
             }
             EquippedItems.Clear();
 
-            HandleQueue.Enqueue(InventoryHandleType.SerializeInventory);
             if (Inventory.GetItemsByID(out inventoryHandle, ids.ToArray(), (uint)ids.Count))
             {
+                HandleQueue.Enqueue(InventoryHandleType.SerializeInventory);
                 Debug.Log("Try to serialize inventory...");
             }
         }
@@ -670,10 +670,9 @@ namespace Manager
             UInt32[] inputCount = { 1 };
 
             SteamItemDef_t[] outItemDefTs = { GetCrateDef(item.itemDetails.m_iDefinition.m_SteamItemDef) };
-            HandleQueue.Enqueue(CrateOpenAnimationEnable ? InventoryHandleType.Exchange : InventoryHandleType.None);
-
-            Inventory.ExchangeItems(out inventoryHandle, outItemDefTs, outCount, 1, new[] { item.itemDetails.m_itemId },
-                inputCount, 1);
+            if (Inventory.ExchangeItems(out inventoryHandle, outItemDefTs, outCount, 1, new[] { item.itemDetails.m_itemId },
+                    inputCount, 1))
+                HandleQueue.Enqueue(CrateOpenAnimationEnable ? InventoryHandleType.Exchange : InventoryHandleType.None);
         }
 
         IEnumerator NewTagDisappear(SteamItemStored steamItemStored)
@@ -843,11 +842,11 @@ namespace Manager
 
         public void TryToSerializeNewItem(ulong id)
         {
-            HandleQueue.Enqueue(InventoryHandleType.SerializeNewItem);
             var ids = new SteamItemInstanceID_t[] { new(id) };
 
             if (Inventory.GetItemsByID(out inventoryHandle, ids, (uint)ids.Length))
             {
+                HandleQueue.Enqueue(InventoryHandleType.SerializeNewItem);
                 Debug.Log($"Try to serialize new item {id}...");
             }
         }
@@ -890,14 +889,14 @@ namespace Manager
         }
         void GetItem()
         {
-            HandleQueue.Enqueue(InventoryHandleType.GetInventory);
-            Inventory.GetAllItems(out inventoryHandle);
+            if (Inventory.GetAllItems(out inventoryHandle))
+                HandleQueue.Enqueue(InventoryHandleType.GetInventory);
         }
 
         public void GetBox()
         {
-            HandleQueue.Enqueue(InventoryHandleType.ItemDrop);
-            Inventory.TriggerItemDrop(out inventoryHandle, (SteamItemDef_t)11);
+            if (Inventory.TriggerItemDrop(out inventoryHandle, (SteamItemDef_t)11))
+                HandleQueue.Enqueue(InventoryHandleType.ItemDrop);
             // Debug.Log("get Box  ");
         }
 
@@ -911,8 +910,8 @@ namespace Manager
 
         public void GetLevelUpReward()
         {
-            HandleQueue.Enqueue(InventoryHandleType.ItemDrop);
-            Inventory.AddPromoItem(out inventoryHandle, (SteamItemDef_t)1112);
+            if (Inventory.AddPromoItem(out inventoryHandle, (SteamItemDef_t)1112))
+                HandleQueue.Enqueue(InventoryHandleType.ItemDrop);
         }
 
         [Serializable]
