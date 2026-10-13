@@ -223,7 +223,7 @@ public class Chat : MonoBehaviour
     {
         DestroyUselessThing();
 
-        if (!input.isFocused && !CosmeticMenu.Instance.inspectWindow.activeSelf)
+        if (!input.isFocused && (CosmeticMenu.Instance && !CosmeticMenu.Instance.inspectWindow.activeSelf))
             DisableBlockraycast();
 
         GameObject obj = Instantiate(prefab, c);
