@@ -37,22 +37,6 @@ jobs:
             targetPlatform: StandaloneLinux64
 
     steps:
-      - name: Compute version
-        id: version
-        shell: bash
-        run: |
-          if [[ "${{ inputs.version_scheme }}" == "nightly" ]]; then
-            BASE=$(git describe --tags --abbrev=0 --match "v*" 2>/dev/null || echo "v0.0.0")
-            BASE=${BASE#v}
-            DATE=$(date +'%Y%m%d')
-            SHA=$(echo ${{ github.sha }} | cut -c1-7)
-            echo "versioning=Custom" >> "$GITHUB_OUTPUT"
-            echo "version=${BASE}-nightly.${DATE}.${SHA}" >> "$GITHUB_OUTPUT"
-          else
-            echo "versioning=Semantic" >> "$GITHUB_OUTPUT"
-            echo "version=" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Free Disk Space (Ubuntu)
         if: runner.os == 'Linux'
         uses: jlumbroso/free-disk-space@v2
@@ -122,6 +106,22 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
+
+      - name: Compute version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ inputs.version_scheme }}" == "nightly" ]]; then
+            BASE=$(git describe --tags --abbrev=0 --match "v*" 2>/dev/null || echo "v0.0.0")
+            BASE=${BASE#v}
+            DATE=$(date +'%Y%m%d')
+            SHA=$(echo ${{ github.sha }} | cut -c1-7)
+            echo "versioning=Custom" >> "$GITHUB_OUTPUT"
+            echo "version=${BASE}-nightly.${DATE}.${SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "versioning=Semantic" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Restore Unlicensed Assets
         env:
@@ -205,11 +205,11 @@ jobs:
         username: ${{ secrets.STEAM_USERNAME }}
         configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
         appId: 1949740
-        buildDescription: 'Build ${{ github.ref_name }} ${{ github.sha }}'
+        buildDescription: ${{ inputs.build_description }}
         rootPath: build
         depot1Path: StandaloneWindows64
         depot2Path: StandaloneLinux64
-        releaseBranch: nightly
+        releaseBranch: ${{ inputs.steam_branch }}
 
     - name: Delete artifacts
       uses: actions/github-script@v7
