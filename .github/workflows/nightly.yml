@@ -12,6 +12,7 @@ on:
       - 'Packages/**'
       - 'ProjectSettings/**'
       - '.github/workflows/nightly.yml'
+      - '.github/workflows/_build-n-deploy.yml'
   workflow_dispatch:
 
 # When merging bunch of PRs at once, canceling previous CD is necessary to save CD usage
