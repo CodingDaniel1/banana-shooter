@@ -4,20 +4,6 @@ description: Setup git/lfs/restore and library cache before building player
 runs:
   using: composite
   steps:
-    - name: Free Disk Space (Ubuntu)
-      if: runner.os == 'Linux'
-      uses: jlumbroso/free-disk-space@v2
-      with:
-        tool-cache: false
-
-    - uses: ./.github/actions/install-bsubp
-
-    # Checkout (without LFS)
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
     # Git LFS
     - name: Create LFS file list
       run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id

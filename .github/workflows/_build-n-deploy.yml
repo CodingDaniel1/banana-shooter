@@ -1,5 +1,5 @@
 # This is intended as an automation for deploying updates, but since it's using secrets everywhere, forked repos can't run this workflow
-
+name: Build and Deploy
 on:
   workflow_call:
     inputs:
@@ -34,6 +34,20 @@ jobs:
             targetPlatform: StandaloneLinux64
 
     steps:
+      - name: Free Disk Space (Ubuntu)
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@v2
+        with:
+          tool-cache: false
+
+      - uses: ./.github/actions/install-bsubp
+
+      # Checkout (without LFS)
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: ./.github/actions/setup-build
 
       - name: Build Server
