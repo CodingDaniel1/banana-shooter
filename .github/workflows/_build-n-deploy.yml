@@ -39,6 +39,7 @@ jobs:
     steps:
       - name: Compute version
         id: version
+        shell: bash
         run: |
           if [[ "${{ inputs.version_scheme }}" == "nightly" ]]; then
             BASE=$(git describe --tags --abbrev=0 --match "v*" 2>/dev/null || echo "v0.0.0")
