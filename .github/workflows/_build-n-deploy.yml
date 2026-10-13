@@ -110,7 +110,7 @@ jobs:
           versioning: ${{ steps.version.outputs.versioning }}
           version: ${{ steps.version.outputs.version }}
           buildName: Banana Shooter Dedicated Server
-          buildPath: build-server
+          buildsPath: build-server
           customParameters: -standaloneBuildSubtarget Server
 
       - name: Remove IL2CPP/Burst debug directories
