@@ -1456,7 +1456,14 @@ namespace Multiplayer
                     float range = 1000f, spread = 0f;
                     if (fromPlayer.IsInfected || weapon.Stat.weaponType == WeaponStat.WeaponType.Knife) range = 4f;
                     else if (weapon.Stat.weaponType == WeaponStat.WeaponType.Taser) range = 6f;
-                    else spread = weapon.Stat.spreadAngle / 80f / Mathf.Max(lookDir.magnitude, 0.001f);
+                    else
+                    {
+                        // Pellets go along lookDir + offset with |offset| <= s; the widest one is tangent to that
+                        // sphere, so its slope off lookDir is s / sqrt(|lookDir|^2 - s^2). Past that, don't cull.
+                        float s = weapon.Stat.spreadAngle / 80f;
+                        float d = lookDir.sqrMagnitude - s * s;
+                        spread = d > 0.0001f ? s / Mathf.Sqrt(d) : float.PositiveInfinity;
+                    }
 
                     SpawnHitboxes(finalTick, finalTick, fromPlayer, raycastPos, lookDir.normalized, range, spread, 0f);
 
@@ -1708,6 +1715,8 @@ namespace Multiplayer
         /// <summary>Distance from <paramref name="position"/> to the shot segment, widened by spread, within margin.</summary>
         static bool NearShot(Vector3 position, Vector3 origin, Vector3 dir, float range, float spread, float margin)
         {
+            if (float.IsPositiveInfinity(spread)) return true;
+
             Vector3 toTarget = position - origin;
             float along = Mathf.Clamp(Vector3.Dot(toTarget, dir), 0f, range);
             float radius = margin + along * spread;
