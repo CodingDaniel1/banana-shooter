@@ -40,8 +40,6 @@ jobs:
         with:
           tool-cache: false
 
-      - uses: ./.github/actions/install-bsubp
-
       # Checkout (without LFS)
       - name: Checkout Repository
         uses: actions/checkout@v4
