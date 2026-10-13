@@ -50,20 +50,20 @@ jobs:
 
           if [ "${{ runner.os }}" = "Windows" ]; then
             ARCHIVE="bsubp-x86_64-pc-windows-msvc.zip"
-            EXPECTED_SHA256="32c4d446967582d12772f756c84b3a8526da7dd7d643d96564e78bb16a2b5fbc"
+            EXPECTED_SHA256="19bf8213133082d28347c29472171e63af82857c84dd941d003c46fab30d3eb5"
           elif [ "${{ runner.os }}" = "macOS" ]; then
             ARCHIVE="bsubp-x86_64-apple-darwin.tar.gz"
-            EXPECTED_SHA256="53d0bafb5972283e51f8a890cfb971df288988e5c934236d0bdf2c4bca6a92ac"
+            EXPECTED_SHA256="3981a7e58b31dd10605b9bd5d11a671506829c72deb54aacd9ebda35fae0e78d"
           else
             ARCHIVE="bsubp-x86_64-unknown-linux-gnu.tar.gz"
-            EXPECTED_SHA256="2c57b131ed2fff260ea1ed3c0ab82448a0934734f53098bf23f654f13ad82852"
+            EXPECTED_SHA256="2bac353ffe8630f995f5ba37283e57039bf4a10d73a5ea9d32a379107ff84b28"
           fi
 
           INSTALL_DIR="$HOME/.local/bin"
           mkdir -p "$INSTALL_DIR"
 
           curl -fsSL -o "$ARCHIVE" \
-            "https://github.com/Squalive/bsubp/releases/download/v1.0.31/$ARCHIVE"
+            "https://github.com/Squalive/bsubp/releases/download/v1.1.0/$ARCHIVE"
 
           echo "$EXPECTED_SHA256  $ARCHIVE" | sha256sum -c -
 
@@ -129,7 +129,7 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
-            bsubp restore 2026-10-02T13-44-15Z --confirm
+            bsubp restore 2026-10-13T09-37-48Z -c
 
       - name: Cache library
         uses: actions/cache@v4
