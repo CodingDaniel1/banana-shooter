@@ -110,7 +110,7 @@ jobs:
           unityVersion: 2021.3.45f2
           versioning: ${{ steps.version.outputs.versioning }}
           version: ${{ steps.version.outputs.version }}
-          buildName: Banana Shooter Dedicated Server
+          buildName: bsds
           buildsPath: build-server
           customParameters: -standaloneBuildSubtarget Server
 
@@ -118,17 +118,12 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          SUDO=""
-          if [ "${{ runner.os }}" = "Linux" ]; then SUDO="sudo"; fi
-
-          $SUDO find build-server -type d \( \
+          sudo find build-server -type d \( \
             -name '*_BackUpThisFolder_ButDontShipItWithYourGame' -o \
             -name '*_BurstDebugInformation_DoNotShip' \
           \) -prune -exec rm -rf {} +
 
-          if [ -n "$SUDO" ]; then
-            $SUDO chown -R "$(id -u):$(id -g)" build-server
-          fi
+          sudo chown -R "$(id -u):$(id -g)" build-server
 
           echo "Remaining build contents:"
           find build-server -maxdepth 2 -type d
@@ -181,7 +176,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Client-${{ matrix.targetPlatform }}
-          path: artifacts/client
+          path: artifacts/client/${{ matrix.targetPlatform }}
           retention-days: 1
 
       - name: Upload Build Server
@@ -189,7 +184,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Server-${{ matrix.targetPlatform }}
-          path: artifacts/server
+          path: artifacts/server/${{ matrix.targetPlatform }}
           retention-days: 1
 
   deploy:
