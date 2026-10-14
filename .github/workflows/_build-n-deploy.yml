@@ -238,7 +238,7 @@ jobs:
         appId: 2406780
         buildDescription: ${{ inputs.build_description }}
         rootPath: server
-        # depot1Path: StandaloneWindows64
+        # Windows is depot1 and will be removed in the future
         depot2Path: StandaloneLinux64
         releaseBranch: nightly
 
