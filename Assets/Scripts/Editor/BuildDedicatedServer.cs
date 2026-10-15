@@ -50,6 +50,7 @@ public static class BuildDedicatedServer
     }
 }
 
+#if UNITY_SERVER
 // Unity 2021.3 still compiles every shader variant for server builds, which never render.
 class StripServerShaders : IPreprocessShaders, IPreprocessComputeShaders
 {
@@ -57,11 +58,12 @@ class StripServerShaders : IPreprocessShaders, IPreprocessComputeShaders
 
     public void OnProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> data)
     {
-        if (BuildDedicatedServer.Building) data.Clear();
+        data.Clear();
     }
 
     public void OnProcessComputeShader(ComputeShader shader, string kernelName, IList<ShaderCompilerData> data)
     {
-        if (BuildDedicatedServer.Building) data.Clear();
+        data.Clear();
     }
 }
+#endif
