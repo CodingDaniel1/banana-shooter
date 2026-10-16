@@ -22,7 +22,7 @@ on:
 
 jobs:
   build-client:
-    name: Build for ${{ matrix.targetPlatform }}
+    name: Build Client for ${{ matrix.targetPlatform }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
@@ -137,7 +137,7 @@ jobs:
           retention-days: 1
 
   build-server:
-    name: Build for ${{ matrix.targetPlatform }}
+    name: Build Server for ${{ matrix.targetPlatform }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
