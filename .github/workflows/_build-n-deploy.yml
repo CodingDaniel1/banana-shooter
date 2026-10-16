@@ -111,7 +111,7 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           buildName: Banana Shooter
 
-      - name: Remove Client IL2CPP/Burst debug directories
+      - name: Remove IL2CPP/Burst debug directories
         shell: bash
         run: |
           SUDO=""
@@ -226,19 +226,19 @@ jobs:
           buildName: bsds
           customParameters: -standaloneBuildSubtarget Server
 
-      - name: Remove Server IL2CPP/Burst debug directories
+      - name: Remove IL2CPP/Burst debug directories
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          sudo find build-server -type d \( \
+          sudo find build -type d \( \
             -name '*_BackUpThisFolder_ButDontShipItWithYourGame' -o \
             -name '*_BurstDebugInformation_DoNotShip' \
           \) -prune -exec rm -rf {} +
 
-          sudo chown -R "$(id -u):$(id -g)" build-server
+          sudo chown -R "$(id -u):$(id -g)" build
 
           echo "Remaining build contents:"
-          find build-server -maxdepth 2 -type d
+          find build -maxdepth 2 -type d
 
       - name: Upload Build
         uses: actions/upload-artifact@v4
