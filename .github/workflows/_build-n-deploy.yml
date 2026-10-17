@@ -3,6 +3,12 @@ name: Build and Deploy
 on:
   workflow_call:
     inputs:
+      linux_os:
+        required: true
+        type: string
+      windows_os:
+        required: true
+        type: string
       # 'nightly' or 'semantic'
       version_scheme:
         required: true
@@ -28,9 +34,9 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: windows-2022
+          - os: ${{ inputs.windows_os }}
             targetPlatform: StandaloneWindows64
-          - os: ubuntu-latest
+          - os: ${{ inputs.linux_os }}
             targetPlatform: StandaloneLinux64
 
     steps:
@@ -143,7 +149,7 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ${{ inputs.linux_os }}
             targetPlatform: StandaloneLinux64
 
     steps:
