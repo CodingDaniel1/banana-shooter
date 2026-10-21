@@ -43,7 +43,7 @@ jobs:
             targetPlatform: StandaloneLinux64
             subtarget: Client
             buildName: Banana Shooter
-            cachePrefix: Library
+            cachePrefix: Library-Client
           - os: ${{ inputs.linux_os }}
             targetPlatform: StandaloneLinux64
             subtarget: Server
