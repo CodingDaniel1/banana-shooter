@@ -5,11 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Level;
 using Manager;
 using Multiplayer;
 using Multiplayer.Entity.Server;
 using Save;
 using SecureServer;
+using Steamworks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Microsoft.CodeAnalysis;
@@ -22,6 +24,9 @@ partial class Program
     static async Task<int> Main(string[] args)
     {
         Directory.CreateDirectory(Application.persistentDataPath);
+        // The menu preload only requires an initialized level manager; the experience
+        // tests below build their own instances.
+        ResetLevelManager();
         await Test("shorter binary write removes old bytes", async () => {
             var p = Temp(); File.WriteAllBytes(p, new byte[] { 1, 2, 3, 4 });
             await SaveSystem.WriteToFileAsync(p, new byte[] { 9 });
@@ -81,11 +86,118 @@ partial class Program
             return Task.CompletedTask;
         });
         await AdditionalTests();
+        await ExperienceTests();
         await SecurityTests();
         await ProjectChecks();
         System.Console.WriteLine($"{passes} passed, {failures} failed");
         return failures == 0 ? 0 : 1;
     }
+
+    static async Task ExperienceTests()
+    {
+        await Test("experience levels follow the level curve", () => {
+            var start = new LevelSystem(0);
+            Check(start.GetLevel() == 0, "a new account is not at the first level");
+            Check(start.GetMinExp() == 0, "the first level does not start at 0 experience");
+            Check(start.GetExpToNext() == LevelUtils.GetExpFromLevel(1), "the first level's threshold is wrong");
+
+            for (int level = 1; level <= 30; level++)
+            {
+                int threshold = LevelUtils.GetExpFromLevel(level);
+                var at = new LevelSystem(threshold);
+                Check(at.GetLevel() == level, $"exactly {threshold} experience is not level {level} but {at.GetLevel()}");
+                Check(at.GetMinExp() == threshold, "the minimum experience of a level does not match its threshold");
+                Check(at.GetExpToNext() == LevelUtils.GetExpFromLevel(level + 1), "the next level's threshold is wrong");
+                Check(new LevelSystem(threshold - 1).GetLevel() == level - 1, $"{threshold - 1} experience already reached level {level}");
+            }
+
+            var max = new LevelSystem(LevelUtils.GetExpFromLevel(98) + 1000000);
+            Check(max.GetLevel() == 99 && max.GetExpToNext() == int.MaxValue, "the maximum level is wrong");
+            return Task.CompletedTask;
+        });
+        await Test("experience earned during a match is stored immediately", () => {
+            var manager = NewLevelManager(1000);
+            manager.AddExp(150);
+            Check(manager.levelSystem.GetExp() == 1150, "the level ignored the earned experience");
+            Check(StoredExperience() == 1150, "earned experience was not stored");
+            return Task.CompletedTask;
+        });
+        await Test("failed experience upload is retried instead of dropped", () => {
+            var manager = NewLevelManager(1000);
+            SteamUserStats.AcceptStore = false;
+            manager.AddExp(150);
+            Check(StoredExperience() == 1000, "a rejected upload was treated as saved");
+            Check(manager.levelSystem.GetExp() == 1150, "the level lost the experience of a rejected upload");
+            SteamUserStats.AcceptStore = true;
+            Time.realtimeSinceStartup += 10f;
+            Invoke(manager, "Update");
+            Check(StoredExperience() == 1150, "the pending experience was never retried");
+            return Task.CompletedTask;
+        });
+        await Test("level waits for the stored experience instead of starting from zero", () => {
+            SteamUserStats.Reset();
+            SteamUserStats.IntStats["EXPERIENCE"] = 5000;
+            SteamUserStats.StatsLoaded = false;
+            LevelManager.Initialized = false;
+            LevelManager.Instance = new LevelManager();
+            LevelManager.Instance.Refresh();
+            Check(!LevelManager.Initialized, "a level was created without the stored experience");
+            Check(StoredExperience() == 5000, "the unread experience was overwritten");
+
+            SteamUserStats.StatsLoaded = true;
+            Time.realtimeSinceStartup += 10f;
+            Invoke(LevelManager.Instance, "Update");
+            Check(LevelManager.Initialized, "the level was never initialized after the stats arrived");
+            Check(LevelManager.Instance.levelSystem.GetExp() == 5000, "the stored experience was not adopted");
+            return Task.CompletedTask;
+        });
+        await Test("experience earned before the stats arrive is kept", () => {
+            SteamUserStats.Reset();
+            SteamUserStats.IntStats["EXPERIENCE"] = 2000;
+            SteamUserStats.StatsLoaded = false;
+            LevelManager.Initialized = false;
+            LevelManager.Instance = new LevelManager();
+            LevelManager.Instance.Refresh();
+            LevelManager.Instance.AddExp(300);
+
+            SteamUserStats.StatsLoaded = true;
+            Time.realtimeSinceStartup += 10f;
+            Invoke(LevelManager.Instance, "Update");
+            Check(LevelManager.Instance.levelSystem.GetExp() == 2300, "experience earned while loading was lost");
+            Check(StoredExperience() == 2300, "the combined experience was not stored");
+            return Task.CompletedTask;
+        });
+        await Test("stored experience is never replaced by a lower value", () => {
+            var manager = NewLevelManager(1000);
+            SteamUserStats.IntStats["EXPERIENCE"] = 5000;
+            manager.AddExp(100);
+            Check(StoredExperience() == 5000, "a lower value overwrote the stored experience");
+            Check(manager.levelSystem.GetExp() == 5000, "the newer stored experience was not adopted");
+            return Task.CompletedTask;
+        });
+    }
+
+    static LevelManager NewLevelManager(int experience)
+    {
+        SteamUserStats.Reset();
+        SteamUserStats.IntStats["EXPERIENCE"] = experience;
+        LevelManager.Initialized = false;
+        var manager = new LevelManager();
+        LevelManager.Instance = manager;
+        manager.Refresh();
+        Check(LevelManager.Initialized && manager.levelSystem != null, "the level was not initialized from the stored experience");
+        Check(manager.levelSystem.GetExp() == experience, "the stored experience was not loaded");
+        return manager;
+    }
+
+    static void ResetLevelManager()
+    {
+        SteamUserStats.Reset();
+        LevelManager.Initialized = true;
+        LevelManager.Instance = new LevelManager();
+    }
+
+    static int StoredExperience() => SteamUserStats.GetStat("EXPERIENCE", out int stored) ? stored : -1;
     static async Task AdditionalTests()
     {
         await Test("failed writes complete with an exception", async () => {

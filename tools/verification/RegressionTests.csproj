@@ -22,6 +22,9 @@
     <Compile Include="../../Assets/Scripts/Web/Manifest.cs" Link="Production/Manifest.cs" />
     <Compile Include="../../Assets/Scripts/SecureServer/Roles.cs" Link="Production/Roles.cs" />
     <Compile Include="../../Assets/Scripts/SecureServer/PlayerBanSummary.cs" Link="Production/PlayerBanSummary.cs" />
+    <Compile Include="../../Assets/Scripts/Level/LevelSystem.cs" Link="Production/LevelSystem.cs" />
+    <Compile Include="../../Assets/Scripts/Level/LevelSystemAnimated.cs" Link="Production/LevelSystemAnimated.cs" />
+    <Compile Include="../../Assets/Scripts/Level/LevelManager.cs" Link="Production/LevelManager.cs" />
     <Compile Include="../../Assets/Scripts/Manager/Preload.cs" Link="Production/Preload.cs" />
     <Compile Include="../../Assets/Scripts/Multiplayer/LagCompensationManager.cs" Link="Production/LagCompensationManager.cs" />
     <Compile Include="../../Assets/Scripts/Weapon/EShootingResult.cs" Link="Production/EShootingResult.cs" />

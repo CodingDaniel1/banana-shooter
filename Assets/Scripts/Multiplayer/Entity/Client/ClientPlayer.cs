@@ -262,9 +262,9 @@ namespace Multiplayer.Entity.Client
         // void SetCosmeticLocal()
         // {
         //     Message message = Message.Create(MessageSendMode.Reliable, (ushort)ClientToServerId.SetCosmetics);
-        //     
+        //
         //     NetworkManager.Instance.SendByte += message.WrittenLength;
-        //     
+        //
         //     NetworkManager.Instance.Client.Send(message);
         // }
 
@@ -737,9 +737,6 @@ namespace Multiplayer.Entity.Client
 
             if (fromPlayerIsLocal)
             {
-                // The local raycast in Firearms can only hit the untagged body capsule of
-                // another player, so a head hit is only known once the server confirms it.
-                // The headshot achievement is therefore unlocked here, from that message.
                 if (headShot && _weaponManager != null && _weaponManager.CurrentWeapon != null &&
                     _weaponManager.CurrentWeapon.gameObject.CompareTag("Sniper"))
                 {
@@ -1495,6 +1492,12 @@ namespace Multiplayer.Entity.Client
 
                     #region Achievement
 
+                    if (hitHead && _weaponManager != null && _weaponManager.CurrentWeapon != null &&
+                        _weaponManager.CurrentWeapon.gameObject.CompareTag("Sniper"))
+                    {
+                        AchievementManager.Instance.SetAchievement(AchievementManager.EAchievements.HEAD_SHOT);
+                    }
+
                     AchievementManager.Instance.SetAchievement(AchievementManager.EAchievements.FIRST_KILL);
 
                     if (bloodThirsty)
@@ -2065,7 +2068,7 @@ namespace Multiplayer.Entity.Client
             //             _gameUi.weaponUis[weaponIndex].DeSelect();
             //             _gameUi.weaponUis[weaponIndex].Display();
             //         }
-            //     
+            //
             //         weapon[weaponIndex] = firearm;
             //         break;
             //     }

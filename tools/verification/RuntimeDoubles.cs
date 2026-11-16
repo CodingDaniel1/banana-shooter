@@ -8,7 +8,26 @@ namespace UnityEngine
     public class SerializeField : Attribute { }
     public class DefaultExecutionOrder : Attribute { public DefaultExecutionOrder(int order) { } }
     public struct Vector3 { public float x, y, z; }
-    public static class Time { public static float realtimeSinceStartup; }
+    public struct Color
+    {
+        public float r, g, b, a;
+        public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; }
+    }
+    public class AudioSource { public float volume; }
+    public static class Time
+    {
+        public static float realtimeSinceStartup;
+        public static float deltaTime = 1f / 60f;
+    }
+    public static class Mathf
+    {
+        public static float Floor(float value) => (float)Math.Floor(value);
+        public static float Pow(float value, float power) => (float)Math.Pow(value, power);
+        public static float Abs(float value) => Math.Abs(value);
+        public static float Lerp(float a, float b, float t) => a + (b - a) * Math.Clamp(t, 0f, 1f);
+        public static int Max(int a, int b) => Math.Max(a, b);
+        public static float Max(float a, float b) => Math.Max(a, b);
+    }
     public static class Application { public static string persistentDataPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "banana-verification", "saves"); }
     public static class Debug
     {
@@ -67,6 +86,52 @@ namespace UnityEngine.Networking
 namespace Steamworks
 {
     public static class SteamUser { public static ulong GetSteamID() => 1; }
+
+    /// <summary>
+    /// Stand-in for the Steam stats API. Mirrors the two behaviours the game has to
+    /// survive: stats are not available before Steam sends them down, and writes can
+    /// be rejected.
+    /// </summary>
+    public static class SteamUserStats
+    {
+        public static readonly Dictionary<string, int> IntStats = new Dictionary<string, int>();
+        /// <summary>False while the user's stats have not been received yet.</summary>
+        public static bool StatsLoaded = true;
+        /// <summary>When false SetStat/StoreStats fail, as they do without a Steam connection.</summary>
+        public static bool AcceptStore = true;
+
+        public static bool GetStat(string name, out int data)
+        {
+            data = 0;
+            if (!StatsLoaded) return false;
+            return IntStats.TryGetValue(name, out data);
+        }
+
+        public static bool SetStat(string name, int data)
+        {
+            if (!AcceptStore) return false;
+            IntStats[name] = data;
+            return true;
+        }
+
+        public static bool SetStat(string name, float data)
+        {
+            if (!AcceptStore) return false;
+            IntStats[name] = (int)data;
+            return true;
+        }
+
+        public static bool StoreStats() => AcceptStore;
+
+        public static bool RequestCurrentStats() => true;
+
+        public static void Reset()
+        {
+            IntStats.Clear();
+            StatsLoaded = true;
+            AcceptStore = true;
+        }
+    }
 }
 namespace Steamworks.NET
 {
@@ -89,18 +154,61 @@ namespace Menu
     }
 }
 namespace CodingDaniel.MapEditor.MEEditor.MESave { public static class MapSaver { public static bool Initialized = true; } }
-namespace Level
-{
-    public class LevelManager
-    {
-        public static LevelManager Instance = new LevelManager();
-        public static bool Initialized = true;
-        public void Refresh() { }
-    }
-}
 namespace Quest { public static class QuestManager { public static bool Initialized = true; } }
 namespace SteamWorkshop { public static class SteamWorkshopManager { public static bool Initialized = true; } }
-namespace Manager { public static class GameManager { public static bool Initialized = true; public enum PowerType { Boomer, Healer } } }
+namespace Manager
+{
+    public static class GameManager { public static bool Initialized = true; public enum PowerType { Boomer, Healer } }
+
+    /// <summary>Stand-in for the production achievement manager's stat API.</summary>
+    public class AchievementManager
+    {
+        public static AchievementManager Instance = new AchievementManager();
+
+        public enum EStats
+        {
+            SNIPER_SHOT = 0,
+            START_GAME_1000,
+            DEATHS,
+            AL48_SHOT,
+            LASER_SHOT,
+            KNIFE_KILL,
+            WINS,
+            TARGET_SCORE,
+            PARKOUR_TIME,
+            EXPERIENCE,
+            KILLS,
+            BANANA_KILL,
+            MAP_PLAY_AMOUNT,
+            GET_BLIND_AMOUNT
+        }
+
+        public enum StatsType
+        {
+            Int,
+            Float
+        }
+
+        public int SetStatsPlusOneCalls;
+
+        public bool SetStat(EStats stats, StatsType type, float score)
+        {
+            switch (type)
+            {
+                case StatsType.Int:
+                    if (!Steamworks.SteamUserStats.SetStat(stats.ToString(), (int)score)) return false;
+                    break;
+                case StatsType.Float:
+                    if (!Steamworks.SteamUserStats.SetStat(stats.ToString(), score)) return false;
+                    break;
+                default:
+                    return false;
+            }
+
+            return Steamworks.SteamUserStats.StoreStats();
+        }
+    }
+}
 namespace Weapon
 {
     public class WeaponStat { public uint bulletAmount = 1; }
