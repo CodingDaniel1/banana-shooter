@@ -46,8 +46,7 @@ namespace Quest
         {
             if (IsReached() && !IsClaim)
             {
-                LevelManager.Instance.expWaitToAdd += QuestObj.expReward;
-                LevelManager.Instance.StoreExp();
+                LevelManager.Instance?.AddExp(QuestObj.expReward);
 
                 bool crate = false;
                 foreach (var reward in QuestObj.rewards)

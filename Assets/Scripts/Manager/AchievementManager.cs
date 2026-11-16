@@ -90,38 +90,52 @@ namespace Manager
             achievedDev = achieved;
         }
 
-        public void SetAchievement(EAchievements achievement)
+        public bool SetAchievement(EAchievements achievement)
         {
-            if (!SteamManager.Initialized) return;
+            if (!SteamManager.Initialized) return false;
 
-            SteamUserStats.SetAchievement(achievement.ToString());
-            SteamUserStats.StoreStats();
+            bool set = SteamUserStats.SetAchievement(achievement.ToString());
+            bool stored = SteamUserStats.StoreStats();
+            return set && stored;
         }
 
         public int SetStatsPlusOne(EStats stats)
         {
             if (!SteamManager.Initialized) return 0;
 
-            SteamUserStats.GetStat(stats.ToString(), out int score);
+            // Without a successful read there is no value to increment: writing 1 over
+            // the real value would reset the stat (and any achievement tracking it).
+            if (!SteamUserStats.GetStat(stats.ToString(), out int score)) return 0;
+
             ++score;
-            SteamUserStats.SetStat(stats.ToString(), score);
+            if (!SteamUserStats.SetStat(stats.ToString(), score)) return 0;
             SteamUserStats.StoreStats();
             return score;
         }
 
-        public void SetStat(EStats stats, StatsType type, float score)
+        /// <summary>
+        /// Stores a stat and reports whether Steam accepted it. Callers that must not
+        /// lose data (experience) keep the value and retry when this returns false.
+        /// </summary>
+        public bool SetStat(EStats stats, StatsType type, float score)
         {
+            if (!SteamManager.Initialized) return false;
+
+            bool set;
             switch (type)
             {
                 case StatsType.Int:
-                    SteamUserStats.SetStat(stats.ToString(), (int)score);
+                    set = SteamUserStats.SetStat(stats.ToString(), (int)score);
                     break;
                 case StatsType.Float:
-                    SteamUserStats.SetStat(stats.ToString(), score);
+                    set = SteamUserStats.SetStat(stats.ToString(), score);
                     break;
+                default:
+                    return false;
             }
-            SteamUserStats.StoreStats();
 
+            if (!set) return false;
+            return SteamUserStats.StoreStats();
         }
 
         public int GetStat(EStats stats)

@@ -67,7 +67,7 @@ namespace Level
 
         public void AddVisualXp()
         {
-            LevelManager.Instance.levelSystem.AddExperience(25000);
+            LevelManager.Instance.AddExp(25000);
         }
 
         private void Update()

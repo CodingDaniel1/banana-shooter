@@ -1,5 +1,4 @@
 using System;
-using Manager;
 using UnityEngine;
 
 namespace Level
@@ -18,6 +17,11 @@ namespace Level
             SetLevel();
         }
 
+        /// <summary>
+        /// Adds experience to the in-memory level. Persisting it is the level
+        /// manager's job: it retries the Steam upload until it is accepted and
+        /// makes sure a stored value can never be replaced by a lower one.
+        /// </summary>
         public void AddExperience(int amount)
         {
             int lastLevel = level;
@@ -29,7 +33,6 @@ namespace Level
             }
 
             OnExpChanged?.Invoke(this, EventArgs.Empty);
-            AchievementManager.Instance.SetStat(AchievementManager.EStats.EXPERIENCE, AchievementManager.StatsType.Int, GetExp());
         }
         public int GetMinExp()
         {
@@ -61,8 +64,15 @@ namespace Level
 
         public void SetExp(int ex)
         {
+            int lastLevel = level;
             experience = ex;
             SetLevel();
+            if (lastLevel < level)
+            {
+                OnLevelChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            OnExpChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public int GetLevel()

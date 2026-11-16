@@ -984,7 +984,7 @@ namespace Multiplayer
             message.Add(currentGroup.m_SteamID);
             var desc = GameManager.Instance.setting.description.Length > 100 ? GameManager.Instance.setting.description.Substring(0, 100) : GameManager.Instance.setting.description;
             message.Add(desc);
-            message.Add(LevelManager.Instance.levelSystem.GetExp());
+            message.Add(LevelManager.Instance.levelSystem != null ? LevelManager.Instance.levelSystem.GetExp() : 0);
             message.Add(displayTag);
 
             message.Add(Weapons);

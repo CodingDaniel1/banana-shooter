@@ -49,7 +49,10 @@ public class JuicyScore : MonoBehaviour
         {
             case ScoreType.Xp:
                 scoreText.SetText($"+{currentScore} XP");
-                LevelManager.Instance.expWaitToAdd += currentScore;
+                // Only this hit's experience is new. Adding currentScore (the running
+                // total of the floating text) counted earlier hits again and again.
+                if (LevelManager.Instance)
+                    LevelManager.Instance.AddExp(score);
                 break;
             case ScoreType.None:
                 scoreText.SetText($"+{currentScore}");

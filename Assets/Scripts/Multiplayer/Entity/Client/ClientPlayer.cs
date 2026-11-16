@@ -737,6 +737,15 @@ namespace Multiplayer.Entity.Client
 
             if (fromPlayerIsLocal)
             {
+                // The local raycast in Firearms can only hit the untagged body capsule of
+                // another player, so a head hit is only known once the server confirms it.
+                // The headshot achievement is therefore unlocked here, from that message.
+                if (headShot && _weaponManager != null && _weaponManager.CurrentWeapon != null &&
+                    _weaponManager.CurrentWeapon.gameObject.CompareTag("Sniper"))
+                {
+                    AchievementManager.Instance.SetAchievement(AchievementManager.EAchievements.HEAD_SHOT);
+                }
+
                 if (list.TryGetValue(fromClient, out var localPlayer))
                 {
                     localPlayer.DamageTracker.DamageGiven(Id, damage);
